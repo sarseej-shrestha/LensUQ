@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from numbers import Integral
+
 import pandas as pd
 from rich.console import Console, Group
 from rich.table import Table
@@ -60,6 +62,20 @@ class AuditReport:
     def n_universes(self) -> int:
         """Number of equally weighted universes in this audit."""
         return len(self._design)
+
+    def most_sensitive(self, n: int = 10) -> pd.DataFrame:
+        """Rank by agreement ascending, range descending, then std descending.
+
+        Exact ties retain audit input order. ``n=0`` returns an empty table.
+        """
+        if isinstance(n, bool) or not isinstance(n, Integral) or n < 0:
+            raise ValueError("n must be a nonnegative integer")
+        ranked = self._summary.sort_values(
+            ["decision_agreement", "probability_range", "standard_deviation"],
+            ascending=[True, False, False],
+            kind="stable",
+        )
+        return ranked.head(n).copy(deep=True)
 
     def __rich__(self) -> Group:
         overview = Table.grid(padding=(0, 2))

@@ -55,3 +55,40 @@ def test_audit_class_labels_follow_threshold(audited):
     assert report.predictions.predicted_class.eq(1).all()
     assert report.dataframe.majority_class.eq(1).all()
     assert report.dataframe.class_flip_count.eq(0).all()
+
+
+def test_ranking_rule_and_exact_ties(audited):
+    _, report, _ = audited
+    # Deliberately shuffled labels demonstrate that final ties use input order.
+    report._summary = pd.DataFrame(
+        {
+            "decision_agreement": [1, 0.5, 0.5, 0.5, 0.5],
+            "probability_range": [0.9, 0.2, 0.3, 0.3, 0.3],
+            "standard_deviation": [0.4, 0.1, 0.1, 0.2, 0.2],
+        },
+        index=["a", "b", "c", "e", "d"],
+    )
+    assert report.most_sensitive().index.tolist() == ["e", "d", "c", "b", "a"]
+    assert report.most_sensitive(0).empty
+
+
+@pytest.mark.parametrize("n", [-1, 1.5, True])
+def test_invalid_ranking_count(audited, n):
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        audited[1].most_sensitive(n)
+
+
+def test_experiment_ranks_latest_audit(audited):
+    experiment, report, X = audited
+    pd.testing.assert_frame_equal(
+        experiment.most_sensitive(3), report.most_sensitive(3)
+    )
+    experiment.audit(X.iloc[:1])
+    assert len(experiment.most_sensitive()) == 1
+    assert len(report.most_sensitive()) == 6
+
+
+def test_audit_required_before_ranking():
+    experiment = PipelineSpace(model=LogisticRegression()).fit([[0], [1]], [0, 1])
+    with pytest.raises(RuntimeError, match="Call audit"):
+        experiment.most_sensitive()

@@ -144,3 +144,12 @@ class Experiment:
         )
         self._last_report = report
         return report
+
+    def most_sensitive(self, n: int = 10) -> pd.DataFrame:
+        """Rank samples from the most recent successful audit."""
+        return self._require_report().most_sensitive(n)
+
+    def _require_report(self) -> AuditReport:
+        if self._last_report is None:
+            raise RuntimeError("Call audit(X) before ranking or explaining samples")
+        return self._last_report
