@@ -85,7 +85,7 @@ sample.render()
 
 summary = report.dataframe
 disagreements = summary.loc[summary.decision_agreement < 1]
-all_predictions = report.predictions     # samples × universes, long form
+all_predictions = report.predictions  # samples × universes, long form
 factor_fractions = report.contributions
 factor_level_means = report.level_means
 ```

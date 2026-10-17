@@ -86,3 +86,22 @@ def test_space_snapshots_input():
 def test_invalid_configurations_fail_early(stages, error, message):
     with pytest.raises(error, match=message):
         PipelineSpace(**stages)
+
+
+def test_factor_named_universe_id_does_not_overwrite_metadata_index():
+    space = PipelineSpace(
+        universe_id=Choice(StandardScaler(), MinMaxScaler()),
+        model=LogisticRegression(),
+    )
+    assert space.metadata.index.tolist() == [0, 1]
+    assert space.metadata["universe_id"].tolist() == [
+        "standard_scaler",
+        "min_max_scaler",
+    ]
+
+
+def test_attribution_residual_name_is_reserved():
+    with pytest.raises(ValueError, match="stage name"):
+        PipelineSpace(
+            interaction_residual=Choice(StandardScaler()), model=LogisticRegression()
+        )

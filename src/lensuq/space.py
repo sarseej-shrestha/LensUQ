@@ -31,7 +31,7 @@ class PipelineSpace:
             raise ValueError("The final stage must be named 'model'")
         self._stages: dict[str, BaseEstimator | Choice] = {}
         for name, stage in stages.items():
-            if not name or "__" in name or name in PIPELINE_PARAMETERS:
+            if not name or "__" in name or name in RESERVED_STAGE_NAMES:
                 raise ValueError(f"Invalid pipeline stage name: {name!r}")
             if name == "model":
                 if isinstance(stage, Choice):
@@ -92,10 +92,11 @@ class PipelineSpace:
         """Universe coordinates without estimator objects."""
         return pd.DataFrame(
             [
-                {"universe_id": id, **dict(zip(self.factors, levels, strict=True))}
-                for id, levels in enumerate(product(*self.factors.values()))
-            ]
-        ).set_index("universe_id")
+                dict(zip(self.factors, levels, strict=True))
+                for levels in product(*self.factors.values())
+            ],
+            index=pd.RangeIndex(self.n_universes, name="universe_id"),
+        )
 
     def __repr__(self) -> str:
         return (
@@ -109,8 +110,8 @@ class PipelineSpace:
         return Experiment._fit(self, X_train, y_train)
 
 
-# sklearn reserves these names for Pipeline constructor parameters.
-PIPELINE_PARAMETERS = {
+# Pipeline constructor parameters and the attribution residual label are reserved.
+RESERVED_STAGE_NAMES = {
     "steps",
     "memory",
     "verbose",

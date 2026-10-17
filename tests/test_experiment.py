@@ -109,3 +109,32 @@ def test_array_prediction_indices(training_data):
     assert experiment.predict_proba(X.to_numpy()).index.equals(pd.RangeIndex(6))
     with pytest.raises(ValueError, match="At least one"):
         experiment.predict_proba(np.empty((0, 2)))
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        [[0.5]],
+        [[np.nan, 0.5]],
+        [[np.inf, 0.5]],
+        [[-0.1, 1.1]],
+        [[0.7, 0.7]],
+    ],
+)
+def test_malformed_estimator_probabilities_rejected(training_data, monkeypatch, values):
+    X, y = training_data
+    experiment = PipelineSpace(model=LogisticRegression()).fit(X, y)
+    monkeypatch.setattr(
+        experiment.universes[0].pipeline, "predict_proba", lambda X: np.asarray(values)
+    )
+    with pytest.raises(ValueError, match="Universe 0"):
+        experiment.predict_proba(X.iloc[:1])
+
+
+def test_multiindex_rejected(training_data):
+    X, y = training_data
+    experiment = PipelineSpace(model=LogisticRegression()).fit(X, y)
+    test = X.copy()
+    test.index = pd.MultiIndex.from_arrays([list("abcdef"), range(6)])
+    with pytest.raises(ValueError, match="flat sample index"):
+        experiment.audit(test)

@@ -128,3 +128,22 @@ def test_failed_audit_retains_previous_snapshot(audited):
     with pytest.raises(ValueError):
         experiment.audit(X, threshold=-1)
     pd.testing.assert_frame_equal(experiment.most_sensitive(), report.most_sensitive())
+
+
+def test_fixed_pipeline_explanation_has_zero_contributions():
+    experiment = PipelineSpace(model=LogisticRegression()).fit([[0], [1]], [0, 1])
+    report = experiment.audit([[0.5]])
+    explanation = report.sample(0)
+    assert explanation.metrics.perfectly_stable
+    assert explanation.contributions.sum() == 0
+    assert explanation.nominal_choices == {}
+    assert explanation.level_means.empty
+    output = StringIO()
+    explanation.render(Console(file=output, width=100, color_system=None))
+    assert "exactly the same probability" in output.getvalue()
+
+
+def test_predict_proba_does_not_replace_audit(audited):
+    experiment, report, X = audited
+    experiment.predict_proba(X.iloc[:1])
+    assert len(experiment.most_sensitive()) == len(report.dataframe)
