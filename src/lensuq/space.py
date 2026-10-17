@@ -110,4 +110,10 @@ class PipelineSpace:
 
 
 # sklearn reserves these names for Pipeline constructor parameters.
-PIPELINE_PARAMETERS = {"steps", "memory", "verbose", "transform_input"}
+PIPELINE_PARAMETERS = {
+    "steps",
+    "memory",
+    "verbose",
+    "transform_input",
+    "interaction_residual",
+}
