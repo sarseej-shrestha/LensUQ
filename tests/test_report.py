@@ -110,7 +110,7 @@ def test_sample_explanation_and_rendering(audited):
     sample.render(Console(file=output, width=120, color_system=None))
     text = output.getvalue()
     for expected in (
-        "Sample 'c'",
+        "Sample c",
         "All universe predictions",
         "interaction_residual",
         "Factor-level mean",

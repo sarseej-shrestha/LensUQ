@@ -101,7 +101,7 @@ class SampleReport:
                 "universes agree on the class at this threshold."
             )
         return Group(
-            Text(f"Sample {self.sample_index!r}", style="bold cyan"),
+            Text(f"Sample {self.sample_index}", style="bold cyan"),
             overview,
             predictions,
             attribution,

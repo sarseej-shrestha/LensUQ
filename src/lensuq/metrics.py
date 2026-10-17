@@ -33,9 +33,11 @@ def prediction_metrics(
         raise ValueError("threshold must be finite and between zero and one")
     decisions = values >= threshold
     positive_count = decisions.sum(axis=1)
+    negative_count = values.shape[1] - positive_count
     fraction = positive_count / values.shape[1]
+    negative_fraction = negative_count / values.shape[1]
     entropy = np.zeros(len(values))
-    for part in (fraction, 1 - fraction):
+    for part in (fraction, negative_fraction):
         mask = part > 0
         entropy[mask] -= part[mask] * np.log2(part[mask])
     # Center small differences, avoiding cancellation near constant predictions.
@@ -51,10 +53,11 @@ def prediction_metrics(
             "maximum_probability": values.max(axis=1),
             "probability_range": np.ptp(values, axis=1),
             "positive_prediction_count": positive_count,
-            "negative_prediction_count": values.shape[1] - positive_count,
+            "negative_prediction_count": negative_count,
             "positive_prediction_fraction": fraction,
-            "negative_prediction_fraction": 1 - fraction,
-            "decision_agreement": np.maximum(fraction, 1 - fraction),
+            "negative_prediction_fraction": negative_fraction,
+            "decision_agreement": np.maximum(positive_count, negative_count)
+            / values.shape[1],
             "class_flip_count": (decisions != decisions[:, :1]).sum(axis=1),
             "decision_entropy": entropy,
             "nominal_decision": decisions[:, 0].astype(int),

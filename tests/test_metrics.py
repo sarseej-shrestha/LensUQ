@@ -61,3 +61,9 @@ def test_invalid_probabilities(values):
 def test_invalid_threshold(threshold):
     with pytest.raises(ValueError, match="threshold"):
         prediction_metrics([[0.5]], threshold=threshold)
+
+
+def test_complementary_vote_counts_have_exactly_equal_agreement():
+    result = prediction_metrics([[0.1] * 6 + [0.9] * 3, [0.1] * 3 + [0.9] * 6])
+    assert result.decision_agreement.iloc[0] == result.decision_agreement.iloc[1]
+    assert result.decision_entropy.iloc[0] == result.decision_entropy.iloc[1]
