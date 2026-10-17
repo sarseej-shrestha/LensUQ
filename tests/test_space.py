@@ -1,8 +1,10 @@
 from itertools import product
 
+import pytest
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+from sklearn.svm import LinearSVC
 
 from lensuq import Choice, PipelineSpace
 
@@ -45,3 +47,42 @@ def test_space_snapshots_input():
     space = PipelineSpace(model=model)
     model.C = 10
     assert space.universes[0].pipeline["model"].C == 2
+
+
+@pytest.mark.parametrize(
+    "stages, error, message",
+    [
+        ({}, ValueError, "final stage"),
+        (
+            {"model": LogisticRegression(), "scale": StandardScaler()},
+            ValueError,
+            "final",
+        ),
+        (
+            {"bad__name": StandardScaler(), "model": LogisticRegression()},
+            ValueError,
+            "name",
+        ),
+        (
+            {"memory": StandardScaler(), "model": LogisticRegression()},
+            ValueError,
+            "name",
+        ),
+        ({"model": Choice(LogisticRegression())}, ValueError, "fixed"),
+        ({"model": StandardScaler()}, TypeError, "classifier"),
+        ({"model": LinearSVC()}, TypeError, "predict_proba"),
+        (
+            {"scale": "passthrough", "model": LogisticRegression()},
+            TypeError,
+            "transformers",
+        ),
+        (
+            {"scale": Choice(LogisticRegression()), "model": LogisticRegression()},
+            TypeError,
+            "transformers",
+        ),
+    ],
+)
+def test_invalid_configurations_fail_early(stages, error, message):
+    with pytest.raises(error, match=message):
+        PipelineSpace(**stages)

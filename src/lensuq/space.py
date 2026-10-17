@@ -26,7 +26,7 @@ class PipelineSpace:
             raise ValueError("The final stage must be named 'model'")
         self._stages: dict[str, BaseEstimator | Choice] = {}
         for name, stage in stages.items():
-            if not name or "__" in name or name in Pipeline_parameters:
+            if not name or "__" in name or name in PIPELINE_PARAMETERS:
                 raise ValueError(f"Invalid pipeline stage name: {name!r}")
             if name == "model":
                 if isinstance(stage, Choice):
@@ -99,4 +99,4 @@ class PipelineSpace:
 
 
 # sklearn reserves these names for Pipeline constructor parameters.
-Pipeline_parameters = {"steps", "memory", "verbose", "transform_input"}
+PIPELINE_PARAMETERS = {"steps", "memory", "verbose", "transform_input"}
