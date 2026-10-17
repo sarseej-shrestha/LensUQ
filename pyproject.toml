@@ -19,6 +19,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.9", "build>=1.2"]
 
+[project.scripts]
+lensuq = "lensuq.cli:main"
+
 [project.urls]
 Repository = "https://github.com/sarseej-shrestha/LensUQ"
 

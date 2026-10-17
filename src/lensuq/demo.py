@@ -28,7 +28,8 @@ MISSING_FEATURES = (
 )
 DEMO_NOTICE = (
     "Missingness is introduced artificially for the prototype to create a "
-    "controlled preprocessing-sensitivity experiment. The demo is not a medical finding."
+    "controlled preprocessing-sensitivity experiment. "
+    "The demo is not a medical finding."
 )
 
 
@@ -102,7 +103,8 @@ def run_demo(console: Console | None = None) -> DemoResult:
     console = console or Console()
     console.print(DEMO_NOTICE, style="yellow")
     console.print(
-        "Traditional view: one preprocessing pipeline -> one model -> one probability.\n"
+        "Traditional view: one preprocessing pipeline -> one model "
+        "-> one probability.\n"
         "LensUQ view: same raw observation -> independently trained preprocessing "
         "universes -> prediction distribution -> stability + attribution.\n"
         "No universe is selected using test performance."
