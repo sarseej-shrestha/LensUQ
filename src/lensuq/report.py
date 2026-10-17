@@ -108,7 +108,8 @@ class SampleReport:
             levels,
             Text(interpretation),
             Text(
-                "Interaction residual aggregates interactions; it does not identify specific pairs."
+                "Interaction residual aggregates interactions; "
+                "it does not identify specific pairs."
             ),
         )
 
