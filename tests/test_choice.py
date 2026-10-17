@@ -17,7 +17,10 @@ def test_order_and_deterministic_labels():
         KNNImputer(),
     )
     assert choice.labels == (
-        "simple_imputer_mean", "simple_imputer_median", "knn_imputer", "knn_imputer_2"
+        "simple_imputer_mean",
+        "simple_imputer_median",
+        "knn_imputer",
+        "knn_imputer_2",
     )
     assert [option.strategy for option in choice.options[:2]] == ["mean", "median"]
     assert "simple_imputer_median" in repr(choice)
