@@ -14,6 +14,7 @@ from sklearn.utils.validation import check_consistent_length
 from lensuq.universe import Universe
 
 if TYPE_CHECKING:
+    from lensuq.report import AuditReport
     from lensuq.space import PipelineSpace
 
 
@@ -27,6 +28,7 @@ class Experiment:
     def __init__(self, universes: tuple[Universe, ...], classes: np.ndarray) -> None:
         self.universes = universes
         self.classes = tuple(classes.tolist())
+        self._last_report: AuditReport | None = None
 
     @classmethod
     def _fit(cls, space: PipelineSpace, X: ArrayLike, y: ArrayLike) -> Experiment:
@@ -95,3 +97,50 @@ class Experiment:
         result = pd.DataFrame(columns, index=index)
         result.columns.name = "universe_id"
         return result
+
+    def audit(self, X: ArrayLike, *, threshold: float = 0.5) -> AuditReport:
+        """Analyze observations and retain this report for subsequent explanation."""
+        from lensuq.attribution import factorial_attribution
+        from lensuq.metrics import prediction_metrics
+        from lensuq.report import AuditReport
+
+        probabilities = self.predict_proba(X)
+        summary = prediction_metrics(probabilities, threshold=threshold)
+        for kind in ("nominal", "majority"):
+            summary[f"{kind}_class"] = summary[f"{kind}_decision"].map(
+                dict(enumerate(self.classes))
+            )
+        design = pd.DataFrame(
+            [dict(u.choices) for u in self.universes],
+            index=pd.Index([u.id for u in self.universes], name="universe_id"),
+        )
+        attribution = factorial_attribution(probabilities, design)
+        rows = []
+        for universe in self.universes:
+            values = probabilities[universe.id].to_numpy()
+            rows.append(
+                pd.DataFrame(
+                    {
+                        "sample_index": probabilities.index,
+                        "universe_id": universe.id,
+                        **{f"choice:{k}": v for k, v in universe.choices.items()},
+                        "probability": values,
+                        "predicted_class": np.asarray(self.classes)[
+                            (values >= threshold).astype(int)
+                        ],
+                    }
+                )
+            )
+        samples = pd.DataFrame(X).copy(deep=True)
+        samples.index = probabilities.index
+        report = AuditReport(
+            summary,
+            pd.concat(rows, ignore_index=True),
+            attribution,
+            samples,
+            design,
+            self.classes,
+            threshold,
+        )
+        self._last_report = report
+        return report
