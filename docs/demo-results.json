@@ -1,0 +1,154 @@
+{
+  "python": "3.14.3",
+  "numpy": "2.5.4",
+  "pandas": "3.0.6",
+  "scikit_learn": "1.9.1",
+  "training_observations": 455,
+  "test_observations": 114,
+  "universes": 9,
+  "missing_cells": 532,
+  "eligible_cells": 3414,
+  "disagreement_observations": 6,
+  "most_sensitive_sample": 385,
+  "metrics": {
+    "nominal_probability": 0.16790800962770763,
+    "mean_probability": 0.3304226179520909,
+    "standard_deviation": 0.18121864501908155,
+    "minimum_probability": 0.14890945956058965,
+    "maximum_probability": 0.6041025790595507,
+    "probability_range": 0.455193119498961,
+    "positive_prediction_count": 3,
+    "negative_prediction_count": 6,
+    "positive_prediction_fraction": 0.3333333333333333,
+    "negative_prediction_fraction": 0.6666666666666666,
+    "decision_agreement": 0.6666666666666666,
+    "class_flip_count": 3,
+    "decision_entropy": 0.9182958340544896,
+    "nominal_decision": 0,
+    "majority_decision": 0,
+    "perfectly_stable": false,
+    "nominal_class": 0,
+    "majority_class": 0
+  },
+  "contributions": {
+    "imputer": 0.0009599943034101484,
+    "scaler": 0.9962226546914351,
+    "interaction_residual": 0.0028173510051548215
+  },
+  "total_sum_of_squares": 0.29556177572296705,
+  "predictions": [
+    {
+      "universe_id": 0,
+      "choice:imputer": "mean",
+      "choice:scaler": "standard",
+      "probability": 0.16790800962770763,
+      "predicted_class": 0
+    },
+    {
+      "universe_id": 1,
+      "choice:imputer": "mean",
+      "choice:scaler": "robust",
+      "probability": 0.25341603601953744,
+      "predicted_class": 0
+    },
+    {
+      "universe_id": 2,
+      "choice:imputer": "mean",
+      "choice:scaler": "minmax",
+      "probability": 0.5729237121115737,
+      "predicted_class": 1
+    },
+    {
+      "universe_id": 3,
+      "choice:imputer": "median",
+      "choice:scaler": "standard",
+      "probability": 0.15788403044606353,
+      "predicted_class": 0
+    },
+    {
+      "universe_id": 4,
+      "choice:imputer": "median",
+      "choice:scaler": "robust",
+      "probability": 0.24743639488866442,
+      "predicted_class": 0
+    },
+    {
+      "universe_id": 5,
+      "choice:imputer": "median",
+      "choice:scaler": "minmax",
+      "probability": 0.5639892924532462,
+      "predicted_class": 1
+    },
+    {
+      "universe_id": 6,
+      "choice:imputer": "knn_5",
+      "choice:scaler": "standard",
+      "probability": 0.14890945956058965,
+      "predicted_class": 0
+    },
+    {
+      "universe_id": 7,
+      "choice:imputer": "knn_5",
+      "choice:scaler": "robust",
+      "probability": 0.2572340474018845,
+      "predicted_class": 0
+    },
+    {
+      "universe_id": 8,
+      "choice:imputer": "knn_5",
+      "choice:scaler": "minmax",
+      "probability": 0.6041025790595507,
+      "predicted_class": 1
+    }
+  ],
+  "level_means": [
+    {
+      "factor": "imputer",
+      "level": "mean",
+      "mean_probability": 0.33141591925293956,
+      "universe_count": 3
+    },
+    {
+      "factor": "imputer",
+      "level": "median",
+      "mean_probability": 0.32310323926265805,
+      "universe_count": 3
+    },
+    {
+      "factor": "imputer",
+      "level": "knn_5",
+      "mean_probability": 0.3367486953406749,
+      "universe_count": 3
+    },
+    {
+      "factor": "scaler",
+      "level": "standard",
+      "mean_probability": 0.1582338332114536,
+      "universe_count": 3
+    },
+    {
+      "factor": "scaler",
+      "level": "robust",
+      "mean_probability": 0.2526954927700288,
+      "universe_count": 3
+    },
+    {
+      "factor": "scaler",
+      "level": "minmax",
+      "mean_probability": 0.5803385278747902,
+      "universe_count": 3
+    }
+  ],
+  "top_ten": [
+    385,
+    41,
+    205,
+    363,
+    261,
+    542,
+    128,
+    375,
+    537,
+    247
+  ]
+}
