@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -14,7 +15,7 @@ from sklearn.utils.validation import check_consistent_length
 from lensuq.universe import Universe
 
 if TYPE_CHECKING:
-    from lensuq.report import AuditReport
+    from lensuq.report import AuditReport, SampleReport
     from lensuq.space import PipelineSpace
 
 
@@ -153,3 +154,7 @@ class Experiment:
         if self._last_report is None:
             raise RuntimeError("Call audit(X) before ranking or explaining samples")
         return self._last_report
+
+    def explain(self, sample_index: Hashable) -> SampleReport:
+        """Explain an index label from the most recent successful audit."""
+        return self._require_report().sample(sample_index)

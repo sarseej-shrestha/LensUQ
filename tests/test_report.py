@@ -92,3 +92,39 @@ def test_audit_required_before_ranking():
     experiment = PipelineSpace(model=LogisticRegression()).fit([[0], [1]], [0, 1])
     with pytest.raises(RuntimeError, match="Call audit"):
         experiment.most_sensitive()
+
+
+def test_sample_explanation_and_rendering(audited):
+    experiment, report, X = audited
+    sample = experiment.explain("c")
+    pd.testing.assert_series_equal(sample.sample, X.loc["c"])
+    assert sample.nominal_choices == {"scale": "standard_scaler"}
+    assert len(sample.predictions) == 2
+    assert len(sample.level_means) == 2
+    assert sample.contributions.sum() == pytest.approx(1)
+    assert (
+        sample.metrics.nominal_probability
+        == report.dataframe.loc["c", "nominal_probability"]
+    )
+    output = StringIO()
+    sample.render(Console(file=output, width=120, color_system=None))
+    text = output.getvalue()
+    for expected in (
+        "Sample 'c'",
+        "All universe predictions",
+        "interaction_residual",
+        "Factor-level mean",
+    ):
+        assert expected in text
+
+
+def test_missing_sample_is_clear(audited):
+    with pytest.raises(KeyError, match="not in this audit"):
+        audited[0].explain("missing")
+
+
+def test_failed_audit_retains_previous_snapshot(audited):
+    experiment, report, X = audited
+    with pytest.raises(ValueError):
+        experiment.audit(X, threshold=-1)
+    pd.testing.assert_frame_equal(experiment.most_sensitive(), report.most_sensitive())

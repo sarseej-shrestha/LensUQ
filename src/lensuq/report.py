@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Hashable
+from dataclasses import dataclass
 from numbers import Integral
 
 import pandas as pd
@@ -10,6 +12,109 @@ from rich.table import Table
 from rich.text import Text
 
 from lensuq.attribution import Attribution
+
+
+@dataclass(frozen=True)
+class SampleReport:
+    """A standalone explanation for one audited observation."""
+
+    sample_index: Hashable
+    sample: pd.Series
+    metrics: pd.Series
+    nominal_choices: dict[str, str]
+    predictions: pd.DataFrame
+    contributions: pd.Series
+    sums_of_squares: pd.Series
+    total_sum_of_squares: float
+    level_means: pd.DataFrame
+    positive_class: object
+    threshold: float
+
+    def __rich__(self) -> Group:
+        m = self.metrics
+        overview = Table.grid(padding=(0, 2))
+        for label, value in (
+            (
+                "Positive class / threshold",
+                f"{self.positive_class} / {self.threshold:g}",
+            ),
+            (
+                "Nominal choices",
+                ", ".join(f"{k}={v}" for k, v in self.nominal_choices.items())
+                or "Fixed pipeline",
+            ),
+            (
+                "Nominal probability / class",
+                f"{m.nominal_probability:.6f} / {m.nominal_class}",
+            ),
+            (
+                "Mean / population std",
+                f"{m.mean_probability:.6f} / {m.standard_deviation:.6f}",
+            ),
+            (
+                "Probability min – max",
+                f"{m.minimum_probability:.6f} – {m.maximum_probability:.6f}",
+            ),
+            ("Majority class", str(m.majority_class)),
+            ("Decision agreement", f"{m.decision_agreement:.2%}"),
+            ("Class flips vs nominal", str(m.class_flip_count)),
+            ("Decision entropy (bits)", f"{m.decision_entropy:.6f}"),
+        ):
+            overview.add_row(label, value)
+        predictions = Table(title="All universe predictions")
+        for column in self.predictions:
+            predictions.add_column(column.removeprefix("choice:"))
+        for row in self.predictions.itertuples(index=False, name=None):
+            predictions.add_row(
+                *[
+                    f"{v:.6f}" if col == "probability" else str(v)
+                    for col, v in zip(self.predictions.columns, row, strict=True)
+                ]
+            )
+        attribution = Table(title="Probability variation attribution")
+        attribution.add_column("Factor")
+        attribution.add_column("Contribution", justify="right")
+        for name, contribution in self.contributions.items():
+            attribution.add_row(str(name), f"{contribution:.2%}")
+        levels = Table(title="Factor-level mean probabilities")
+        for label in ("Factor", "Level", "Mean", "Universes"):
+            levels.add_column(label)
+        for row in self.level_means.itertuples(index=False):
+            levels.add_row(
+                str(row.factor),
+                str(row.level),
+                f"{row.mean_probability:.6f}",
+                str(row.universe_count),
+            )
+        if m.perfectly_stable:
+            interpretation = (
+                "All selected universes produced exactly the same probability."
+            )
+        elif m.decision_agreement < 1:
+            interpretation = (
+                "This observation's predicted class changes across the selected "
+                "preprocessing configurations."
+            )
+        else:
+            interpretation = (
+                "Probabilities vary across the selected configurations, while all "
+                "universes agree on the class at this threshold."
+            )
+        return Group(
+            Text(f"Sample {self.sample_index!r}", style="bold cyan"),
+            overview,
+            predictions,
+            attribution,
+            levels,
+            Text(interpretation),
+            Text(
+                "Interaction residual aggregates interactions; it does not identify specific pairs."
+            ),
+        )
+
+    def render(self, console: Console | None = None) -> None:
+        """Print metrics, every universe prediction, attribution, and level means."""
+        (console or Console()).print(self)
 
 
 class AuditReport:
@@ -76,6 +181,32 @@ class AuditReport:
             kind="stable",
         )
         return ranked.head(n).copy(deep=True)
+
+    def sample(self, sample_index: Hashable) -> SampleReport:
+        """Explain a sample by index label, never by its row position."""
+        if sample_index not in self._summary.index:
+            raise KeyError(f"Sample {sample_index!r} is not in this audit")
+        predictions = self._predictions.loc[
+            self._predictions.sample_index == sample_index
+        ].drop(columns="sample_index")
+        levels = self._attribution.level_means
+        return SampleReport(
+            sample_index=sample_index,
+            sample=self._samples.loc[sample_index].copy(deep=True),
+            metrics=self._summary.loc[sample_index].copy(deep=True),
+            nominal_choices=self._design.iloc[0].to_dict(),
+            predictions=predictions.reset_index(drop=True),
+            contributions=self.contributions.loc[sample_index].copy(deep=True),
+            sums_of_squares=self._attribution.sums_of_squares.loc[sample_index].copy(
+                deep=True
+            ),
+            total_sum_of_squares=float(
+                self._attribution.total_sum_of_squares.loc[sample_index]
+            ),
+            level_means=levels.loc[levels.sample_index == sample_index].copy(deep=True),
+            positive_class=self.classes[1],
+            threshold=self.threshold,
+        )
 
     def __rich__(self) -> Group:
         overview = Table.grid(padding=(0, 2))
