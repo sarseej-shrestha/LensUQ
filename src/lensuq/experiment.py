@@ -44,7 +44,8 @@ class Experiment:
                 universe.pipeline.fit(deepcopy(X), deepcopy(y))
             except ValueError as exc:
                 raise ValueError(
-                    f"Universe {universe.id} {dict(universe.choices)} failed to fit: {exc}"
+                    f"Universe {universe.id} {dict(universe.choices)} "
+                    f"failed to fit: {exc}"
                 ) from exc
             if not np.array_equal(universe.pipeline.classes_, classes):
                 raise ValueError(
@@ -56,3 +57,41 @@ class Experiment:
     def positive_class(self) -> object:
         """The label in sklearn's second probability column (classes_[1])."""
         return self.classes[1]
+
+    def predict_proba(self, X: ArrayLike) -> pd.DataFrame:
+        """Return positive-class probabilities, indexed by sample and universe.
+
+        DataFrame indices must be unique, flat, and nonmissing. Array inputs use
+        a RangeIndex. Prediction copies inputs to isolate in-place transformers.
+        This method does not change the most recent audit.
+        """
+        if isinstance(X, pd.DataFrame):
+            index = X.index.copy()
+            if isinstance(index, pd.MultiIndex):
+                raise ValueError("Use a flat sample index, not a MultiIndex")
+            if not index.is_unique or index.hasnans:
+                raise ValueError("Sample indices must be unique and nonmissing")
+        else:
+            index = pd.RangeIndex(len(X))
+        if len(index) == 0:
+            raise ValueError("At least one observation is required")
+        columns = {}
+        for universe in self.universes:
+            values = np.asarray(universe.pipeline.predict_proba(deepcopy(X)))
+            if values.shape != (len(index), 2):
+                raise ValueError(
+                    f"Universe {universe.id} must return two probabilities"
+                )
+            if (
+                not np.isfinite(values).all()
+                or (values < 0).any()
+                or (values > 1).any()
+                or not np.allclose(values.sum(axis=1), 1, rtol=1e-7, atol=1e-9)
+            ):
+                raise ValueError(
+                    f"Universe {universe.id} returned invalid probabilities"
+                )
+            columns[universe.id] = values[:, 1]
+        result = pd.DataFrame(columns, index=index)
+        result.columns.name = "universe_id"
+        return result
