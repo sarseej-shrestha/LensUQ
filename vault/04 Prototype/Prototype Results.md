@@ -31,7 +31,7 @@ Total probability sum of squares: 0.295561775723. This is a descriptive partitio
 
 ## Verification
 
-The initial complete suite passed **84 tests** with no warnings. Ruff lint and formatting passed. Editable installation, the standalone example, and the packaged CLI ran successfully. Final verification counts are updated with the completed release checks.
+The final local suite passed **94 tests** with no warnings on Python 3.14.3. Ruff lint and formatting passed. Editable installation, the standalone example, and the packaged CLI ran successfully. A source archive and platform-independent wheel were built successfully; build artifacts remain outside version control. All links across the 26 vault notes resolve.
 
 Reproduce from the repository root:
 
