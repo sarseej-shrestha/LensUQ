@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from itertools import product
 from math import prod
+from typing import TYPE_CHECKING
 
 import pandas as pd
+from numpy.typing import ArrayLike
 from sklearn.base import BaseEstimator, clone, is_classifier
 
 from lensuq.choice import Choice
 from lensuq.universe import Universe
+
+if TYPE_CHECKING:
+    from lensuq.experiment import Experiment
 
 
 class PipelineSpace:
@@ -96,6 +101,12 @@ class PipelineSpace:
         return (
             f"PipelineSpace(n_universes={self.n_universes}, factors={self.factors!r})"
         )
+
+    def fit(self, X_train: ArrayLike, y_train: ArrayLike) -> Experiment:
+        """Fit every full pipeline only on the supplied training partition."""
+        from lensuq.experiment import Experiment
+
+        return Experiment._fit(self, X_train, y_train)
 
 
 # sklearn reserves these names for Pipeline constructor parameters.
