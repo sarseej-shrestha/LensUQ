@@ -12,6 +12,8 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from lensuq import Choice, ParamChoice, PipelineSpace
 from lensuq.attribution import factorial_attribution
+from lensuq.cli import main
+from lensuq.extended_demos import build_regression_demo, build_wine_demo
 from lensuq.metrics import multiclass_metrics, regression_metrics
 
 
@@ -137,3 +139,29 @@ def test_cache_equivalence_and_sampled_attribution_restriction():
     assert report.attribution is None
     with pytest.raises(ValueError, match="complete balanced"):
         report.sample(0)
+
+
+def test_extended_demos_and_cli_info(capsys):
+    wine = build_wine_demo()
+    regression = build_regression_demo()
+    assert wine.report.n_universes == 9
+    assert wine.report.dataframe.shape[0] == 45
+    assert regression.report.n_universes == 9
+    assert regression.report.dataframe.shape[0] == 111
+    assert main(["info"]) == 0
+    assert "regression" in capsys.readouterr().out
+
+
+def test_sampled_json_and_seeded_ids(tmp_path):
+    X, y = load_iris(return_X_y=True)
+    space = PipelineSpace(
+        a=Choice(StandardScaler(), MinMaxScaler()),
+        b=Choice(StandardScaler(), MinMaxScaler()),
+        model=LogisticRegression(max_iter=1000),
+    )
+    first = space.fit(X, y, strategy="random", n_universes=2, random_state=4)
+    second = space.fit(X, y, strategy="random", n_universes=2, random_state=4)
+    assert first.metadata["universe_ids"] == second.metadata["universe_ids"]
+    report = first.audit(X[:2])
+    report.to_json(tmp_path / "sampled.json")
+    assert json.loads((tmp_path / "sampled.json").read_text())["attribution"] is None

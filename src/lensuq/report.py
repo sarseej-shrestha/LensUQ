@@ -98,12 +98,13 @@ class SampleReport:
                     for col, v in zip(self.predictions.columns, row, strict=True)
                 ]
             )
-        attribution = Table(title="Probability variation attribution")
+        quantity = "Prediction" if self.task == "regression" else "Probability"
+        attribution = Table(title=f"{quantity} variation attribution")
         attribution.add_column("Factor")
         attribution.add_column("Contribution", justify="right")
         for name, contribution in self.contributions.items():
             attribution.add_row(str(name), f"{contribution:.2%}")
-        levels = Table(title="Factor-level mean probabilities")
+        levels = Table(title=f"Factor-level mean {quantity.lower()}")
         for label in ("Factor", "Level", "Mean", "Universes"):
             levels.add_column(label)
         for row in self.level_means.itertuples(index=False):

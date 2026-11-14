@@ -276,11 +276,10 @@ class Experiment:
                 **{f"choice:{k}": v for k, v in universe.choices.items()},
             }
             if self.task == "classification":
-                row["probability"] = (
-                    tensor[:, j, 1]
-                    if len(self.classes) == 2
-                    else tensor[:, j, :].max(axis=1)
-                )
+                if len(self.classes) == 2:
+                    row["probability"] = tensor[:, j, 1]
+                else:
+                    row["winning_probability"] = tensor[:, j, :].max(axis=1)
                 row["predicted_class"] = np.asarray(self.classes)[decisions[:, j]]
                 if len(self.classes) > 2:
                     for c in range(len(self.classes)):
