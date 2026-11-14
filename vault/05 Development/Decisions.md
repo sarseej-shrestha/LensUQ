@@ -2,32 +2,32 @@
 
 ## ADR 001 — sklearn first
 
-Accepted for 0.1. sklearn provides cloneable estimators, ordered Pipelines, and a compact binary-probability contract. Consequence: no deep-learning adapters, graph engine, or arbitrary containers in the first release.
+Accepted. Cloneable sklearn estimators and Pipelines define the current execution contract. PyTorch and other backends are deferred. [[Long-Term Architecture]] records possible adapters.
 
-## ADR 002 — discrete full factorial first
+## ADR 002 — user-defined defensible spaces
 
-Accepted. Complete products are easy to inspect and make main effects orthogonal under equal weighting. Consequence: exponential cost, no dependent combinations, and no silent dropping of failed cells. [[Attribution Model]] is valid only under this contract.
+Accepted. Domain experts choose levels; computational validity does not imply scientific validity. No automatic selector or performance winner is produced. See [[Vision]].
 
-## ADR 003 — fixed model family and settings
+## ADR 003 — full and sampled execution
 
-Accepted. The intended source of variation is preprocessing. Every representation gets an independently fitted copy of the same classifier configuration. Consequence: model search and performance selection are excluded, while interactions with fitting remain part of the measured response.
+Accepted. Full products support exact orthogonal attribution. Random unique IDs reduce execution cost but provide metrics only. An incomplete-design attribution method requires separate research. See [[Execution Strategies]].
 
-## ADR 004 — analyze probabilities before decisions
+## ADR 004 — independent fitting
 
-Accepted. Probability distributions retain information hidden by thresholding. Decisions add operational context; the two views remain separate. Consequence: the positive label and threshold are explicit, and the API avoids treating probabilities as correctness guarantees.
+Accepted. Every universe clones preprocessing and fits its own model on the same training partition. In-place input mutation is isolated with copies. See [[Universe Model]].
 
-## ADR 005 — descriptive ANOVA partition
+## ADR 005 — classification and regression
 
-Accepted as a prototype estimator. Report main-effect fractions, absolute sums of squares, and an aggregate residual. Consequence: no p-values, no pair-specific claims, and no application to incomplete or weighted designs.
+Accepted. Classification requires `predict_proba` and supports binary and multiclass. Regression requires `predict`. Metrics preserve task-specific meaning. See [[Classification Analysis]] and [[Regression Analysis]].
 
-## ADR 006 — human-defined defensibility
+## ADR 006 — main and pairwise decomposition
 
-Accepted. Scientific rationale cannot be inferred from estimator availability. Consequence: the library validates computation, not scientific suitability. [[LensUQ 0.2]] proposes rationale metadata.
+Accepted for complete Cartesian spaces. Report factor main effects, pairwise interactions, and a higher-order residual. Zero-variance outputs receive zero fractions. These are descriptive, not causal or inferential. See [[Attribution Model]].
 
-## ADR 007 — copy inputs at universe boundaries
+## ADR 007 — safe prefix reuse
 
-Accepted after considering copy=False transformers. Estimator cloning alone does not protect shared arrays. Consequence: extra memory and copying cost, traded for simple, testable isolation in small spaces.
+Accepted as an optional fit-local cache. Only identical ordered prefixes share transformed training results, and copies prevent fitted-object sharing. Cross-dataset or global caching is excluded. See [[Execution Graph and Caching]].
 
-## ADR 008 — rank by integer-derived agreement
+## ADR 008 — structured exports
 
-Accepted. Complementary binary vote patterns must tie exactly before applying range and standard deviation. Consequence: agreement is calculated from the larger integer vote count divided once, avoiding subtraction roundoff that could reorder samples.
+Accepted. Reports expose DataFrames and write CSV/JSON without fitted models. JSON includes factor coordinates and execution metadata. See [[Result Objects]].
