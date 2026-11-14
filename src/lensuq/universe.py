@@ -30,10 +30,19 @@ class Universe:
         cls,
         id: int,
         choices: Mapping[str, str],
-        steps: Sequence[tuple[str, BaseEstimator]],
+        steps: Sequence[tuple[str, BaseEstimator | str]],
     ) -> Universe:
         """Build a fresh pipeline, discarding any supplied fitted state."""
-        return cls(id, choices, Pipeline([(name, clone(step)) for name, step in steps]))
+        return cls(
+            id,
+            choices,
+            Pipeline(
+                [
+                    (name, clone(step) if isinstance(step, BaseEstimator) else step)
+                    for name, step in steps
+                ]
+            ),
+        )
 
     @property
     def is_nominal(self) -> bool:

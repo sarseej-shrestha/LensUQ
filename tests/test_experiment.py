@@ -42,9 +42,9 @@ def test_only_training_data_fits_preprocessors():
         np.testing.assert_allclose(universe.pipeline["imputer"].statistics_, [2])
 
 
-@pytest.mark.parametrize("y", [[0] * 6, [0, 1, 2, 0, 1, 2], [0.1] * 6])
-def test_binary_targets_required(training_data, y):
-    with pytest.raises(ValueError, match="two target classes"):
+@pytest.mark.parametrize("y", [[0] * 6, [0.1] * 6])
+def test_classification_targets_required(training_data, y):
+    with pytest.raises(ValueError, match="at least two discrete"):
         PipelineSpace(model=LogisticRegression()).fit(training_data[0], y)
 
 

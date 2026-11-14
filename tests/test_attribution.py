@@ -27,22 +27,26 @@ def test_two_factor_additive_hand_computation():
     result = decompose([0.1, 0.3, 0.5, 0.7], product(["a", "b"], repeat=2), ["A", "B"])
     assert result.total_sum_of_squares.iloc[0] == pytest.approx(0.2)
     np.testing.assert_allclose(
-        result.sums_of_squares.iloc[0], [0.16, 0.04, 0], atol=1e-15
+        result.sums_of_squares.iloc[0], [0.16, 0.04, 0, 0], atol=1e-15
     )
-    np.testing.assert_allclose(result.contributions.iloc[0], [0.8, 0.2, 0], atol=1e-15)
+    np.testing.assert_allclose(
+        result.contributions.iloc[0], [0.8, 0.2, 0, 0], atol=1e-15
+    )
     assert result.contributions.iloc[0].idxmax() == "A"
 
 
 def test_pure_interaction():
     result = decompose([0.1, 0.9, 0.9, 0.1], product([0, 1], repeat=2), ["A", "B"])
-    np.testing.assert_allclose(result.contributions.iloc[0], [0, 0, 1], atol=1e-15)
+    np.testing.assert_allclose(result.contributions.iloc[0], [0, 0, 1, 0], atol=1e-15)
 
 
 def test_mixed_main_effects_and_interaction():
     # Grand=.5, A=+/-.2, B=+/-.1, A:B=+/-.05. Total SS=.21.
     result = decompose([0.25, 0.35, 0.55, 0.85], product([0, 1], repeat=2), ["A", "B"])
-    np.testing.assert_allclose(result.sums_of_squares.iloc[0], [0.16, 0.04, 0.01])
-    np.testing.assert_allclose(result.contributions.iloc[0], np.array([16, 4, 1]) / 21)
+    np.testing.assert_allclose(result.sums_of_squares.iloc[0], [0.16, 0.04, 0.01, 0])
+    np.testing.assert_allclose(
+        result.contributions.iloc[0], np.array([16, 4, 1, 0]) / 21
+    )
 
 
 def test_zero_variation_and_singleton_factor():
@@ -51,7 +55,7 @@ def test_zero_variation_and_singleton_factor():
     assert result.total_sum_of_squares.iloc[0] == 0
     assert (result.contributions == 0).all().all()
     singleton = decompose([0.2, 0.8], [("fixed", 0), ("fixed", 1)], ["A", "B"])
-    np.testing.assert_allclose(singleton.contributions.iloc[0], [0, 1, 0])
+    np.testing.assert_allclose(singleton.contributions.iloc[0], [0, 1, 0, 0])
 
 
 def test_no_factors():

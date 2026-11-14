@@ -72,11 +72,6 @@ def test_space_snapshots_input():
         ({"model": StandardScaler()}, TypeError, "classifier"),
         ({"model": LinearSVC()}, TypeError, "predict_proba"),
         (
-            {"scale": "passthrough", "model": LogisticRegression()},
-            TypeError,
-            "transformers",
-        ),
-        (
             {"scale": Choice(LogisticRegression()), "model": LogisticRegression()},
             TypeError,
             "transformers",

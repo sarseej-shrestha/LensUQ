@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import combinations
 from math import prod
 
 import numpy as np
 import pandas as pd
-
-from lensuq.metrics import validate_probabilities
 
 INTERACTION = "interaction_residual"
 
@@ -34,7 +33,9 @@ def factorial_attribution(
     are rejected. All universes have equal weight. The residual aggregates all
     interaction orders; it does not identify any particular factor pairing.
     """
-    values = validate_probabilities(probabilities)
+    values = np.asarray(probabilities, dtype=float)
+    if values.ndim != 2 or 0 in values.shape or not np.isfinite(values).all():
+        raise ValueError("Attribution values must be a finite nonempty matrix")
     if not probabilities.columns.equals(design.index):
         raise ValueError("Probability columns must match the design index in order")
     if not design.index.is_unique or not design.columns.is_unique:
@@ -73,6 +74,20 @@ def factorial_attribution(
                 )
             )
         effects[factor] = effect
+    for a, b in combinations(levels, 2):
+        effect = np.zeros(len(values))
+        for level_a in levels[a]:
+            mask_a = (design[a] == level_a).to_numpy()
+            mean_a = differences[:, mask_a].mean(axis=1)
+            for level_b in levels[b]:
+                mask_b = (design[b] == level_b).to_numpy()
+                mean_b = differences[:, mask_b].mean(axis=1)
+                mask = mask_a & mask_b
+                cell = differences[:, mask].mean(axis=1)
+                effect += (
+                    int(mask.sum()) * (cell - mean_a - mean_b + grand_difference) ** 2
+                )
+        effects[f"{a} × {b}"] = effect
     effects[INTERACTION] = np.maximum(0, total - sum(effects.values()))
     ss = pd.DataFrame(effects, index=probabilities.index)
     contributions = ss.div(np.where(total > 0, total, 1), axis=0)

@@ -6,9 +6,10 @@ from itertools import product
 from math import prod
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike
-from sklearn.base import BaseEstimator, clone, is_classifier
+from sklearn.base import BaseEstimator, clone, is_classifier, is_regressor
 
 from lensuq.choice import Choice
 from lensuq.universe import Universe
@@ -36,13 +37,21 @@ class PipelineSpace:
             if name == "model":
                 if isinstance(stage, Choice):
                     raise ValueError("The model must be fixed, not a Choice")
-                if not isinstance(stage, BaseEstimator) or not is_classifier(stage):
-                    raise TypeError("model must be a scikit-learn classifier")
-                if not callable(getattr(stage, "predict_proba", None)):
-                    raise TypeError("model must implement predict_proba")
+                if not isinstance(stage, BaseEstimator) or not (
+                    is_classifier(stage) or is_regressor(stage)
+                ):
+                    raise TypeError(
+                        "model must be a scikit-learn classifier or regressor"
+                    )
+                if is_classifier(stage) and not callable(
+                    getattr(stage, "predict_proba", None)
+                ):
+                    raise TypeError("classifier model must implement predict_proba")
             else:
                 options = stage.options if isinstance(stage, Choice) else (stage,)
                 for option in options:
+                    if option == "passthrough":
+                        continue
                     if not isinstance(option, BaseEstimator) or not all(
                         callable(getattr(option, method, None))
                         for method in ("fit", "transform")
@@ -52,6 +61,8 @@ class PipelineSpace:
                 Choice(*stage.options, name=stage.name, labels=stage.labels)
                 if isinstance(stage, Choice)
                 else clone(stage)
+                if isinstance(stage, BaseEstimator)
+                else stage
             )
 
     @property
@@ -71,6 +82,36 @@ class PipelineSpace:
     @property
     def universes(self) -> tuple[Universe, ...]:
         """Fresh universes; the rightmost factor varies fastest."""
+        return self.select_universes()
+
+    def select_universes(
+        self,
+        *,
+        strategy: str = "full",
+        n_universes: int | None = None,
+        random_state: int | None = None,
+    ) -> tuple[Universe, ...]:
+        """Build full or reproducibly sampled unique Cartesian universes."""
+        if strategy not in {"full", "random"}:
+            raise ValueError("strategy must be 'full' or 'random'")
+        if strategy == "full":
+            if n_universes is not None:
+                raise ValueError("n_universes is only valid for random sampling")
+            ids = range(self.n_universes)
+        else:
+            if (
+                isinstance(n_universes, bool)
+                or not isinstance(n_universes, int)
+                or not 1 <= n_universes <= self.n_universes
+            ):
+                raise ValueError(
+                    "n_universes must be between 1 and the possible universe count"
+                )
+            ids = sorted(
+                np.random.default_rng(random_state)
+                .choice(self.n_universes, size=n_universes, replace=False)
+                .tolist()
+            )
         alternatives = [
             list(zip(stage.labels, stage.options, strict=True))
             if isinstance(stage, Choice)
@@ -78,7 +119,18 @@ class PipelineSpace:
             for stage in self._stages.values()
         ]
         result = []
-        for id, combination in enumerate(product(*alternatives)):
+        for id in ids:
+            remaining = id
+            indices = []
+            for options in reversed(alternatives):
+                remaining, position = divmod(remaining, len(options))
+                indices.append(position)
+            combination = [
+                options[position]
+                for options, position in zip(
+                    alternatives, reversed(indices), strict=True
+                )
+            ]
             choices, steps = {}, []
             for name, (label, estimator) in zip(self._stages, combination, strict=True):
                 steps.append((name, estimator))
@@ -103,11 +155,28 @@ class PipelineSpace:
             f"PipelineSpace(n_universes={self.n_universes}, factors={self.factors!r})"
         )
 
-    def fit(self, X_train: ArrayLike, y_train: ArrayLike) -> Experiment:
+    def fit(
+        self,
+        X_train: ArrayLike,
+        y_train: ArrayLike,
+        *,
+        strategy: str = "full",
+        n_universes: int | None = None,
+        random_state: int | None = None,
+        cache: bool = False,
+    ) -> Experiment:
         """Fit every full pipeline only on the supplied training partition."""
         from lensuq.experiment import Experiment
 
-        return Experiment._fit(self, X_train, y_train)
+        return Experiment._fit(
+            self,
+            X_train,
+            y_train,
+            strategy=strategy,
+            n_universes=n_universes,
+            random_state=random_state,
+            cache=cache,
+        )
 
 
 # Pipeline constructor parameters and the attribution residual label are reserved.

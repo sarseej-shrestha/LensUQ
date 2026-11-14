@@ -16,11 +16,27 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--version", action="version", version=f"LensUQ {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser(
-        "demo", help="Run the offline artificial-missingness experiment"
+    demo = subparsers.add_parser("demo", help="Run an offline demonstration")
+    demo.add_argument(
+        "name",
+        nargs="?",
+        choices=("breast-cancer", "wine", "regression"),
+        default="breast-cancer",
     )
-    parser.parse_args(argv)
-    from lensuq.demo import run_demo
+    subparsers.add_parser("info", help="Show version and supported experiments")
+    args = parser.parse_args(argv)
+    if args.command == "info":
+        print(
+            f"LensUQ {__version__}\n"
+            "Tasks: binary classification, multiclass classification, regression\n"
+            "Demos: breast-cancer, wine, regression"
+        )
+    elif args.name == "breast-cancer":
+        from lensuq.demo import run_demo
 
-    run_demo()
+        run_demo()
+    else:
+        from lensuq.extended_demos import run_extended_demo
+
+        run_extended_demo(args.name)
     return 0

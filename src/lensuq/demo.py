@@ -27,9 +27,8 @@ MISSING_FEATURES = (
     "mean concave points",
 )
 DEMO_NOTICE = (
-    "Missingness is introduced artificially for the prototype to create a "
-    "controlled preprocessing-sensitivity experiment. "
-    "The demo is not a medical finding."
+    "This is a controlled prototype demonstration of preprocessing sensitivity, "
+    "not a medical finding. Missingness is introduced artificially."
 )
 
 
