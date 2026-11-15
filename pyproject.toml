@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lensuq"
 version = "0.2.0"
-description = "Measure prediction sensitivity across defensible preprocessing pipelines"
+description = "Quantify prediction sensitivity across alternative preprocessing pipelines"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Sarseej Shrestha"}]
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.9", "build>=1.2"]
+dev = ["pytest>=8", "ruff>=0.9", "build>=1.2", "twine>=6"]
 
 [project.scripts]
 lensuq = "lensuq.cli:main"

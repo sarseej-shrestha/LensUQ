@@ -23,6 +23,14 @@ For a declared pipeline space P, LensUQ fits an estimator separately in every se
 Python 3.11 or newer:
 
 ```bash
+python -m pip install lensuq
+```
+
+For development from a checkout:
+
+```bash
+git clone https://github.com/sarseej-shrestha/LensUQ.git
+cd LensUQ
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
@@ -31,23 +39,24 @@ python -m pip install -e '.[dev]'
 ## Quick Start
 
 ```python
-from lensuq import Choice, ParamChoice, PipelineSpace
-from sklearn.impute import SimpleImputer
+from lensuq import Choice, PipelineSpace
+from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, RobustScaler
 
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, _ = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42
+)
 space = PipelineSpace(
-    imputer=ParamChoice(SimpleImputer, strategy=["mean", "median"]),
     scaler=Choice(StandardScaler(), RobustScaler()),
     model=LogisticRegression(max_iter=1000, random_state=42),
 )
-# Split X and y before fitting. Transformers fit only on X_train.
 experiment = space.fit(X_train, y_train, cache=True)
 report = experiment.audit(X_test)
 print(report.most_sensitive(5))
 print(report.sample(report.most_sensitive(1).index[0]).contributions)
-report.to_csv("samples.csv")
-report.to_json("audit.json")
 ```
 
 ## Core Abstractions
